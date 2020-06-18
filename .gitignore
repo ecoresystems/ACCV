@@ -141,8 +141,8 @@ cython_debug/
 .idea
 
 # Multimedia File
-.mp4
-.mkv
+*.mp4
+*.mkv
 
 # Weight file
-.weights
+*.weights
