@@ -22,7 +22,7 @@ if __name__ == "__main__":
         ret, frame = cap.read()
         counter += 1
         counterx = 0
-        if ret and counter > 100:
+        if ret:
             # img = cv2.resize(frame, None, fx=0.8, fy=0.8)
             img = frame
             b, g, r = cv2.split(img)
@@ -45,7 +45,10 @@ if __name__ == "__main__":
                     # cv2.putText(img, label, (x, y + 30), font, 1, color, 1)
                     identified_object = img[y:(y + h), x:(x + w)]
                     frame_objects.append((identified_object, x, y, w, h, label))
-            blured_background = cv2.GaussianBlur(img, (5, 5), cv2.BORDER_DEFAULT)
+            if len(frame_objects) > 0:
+                blured_background = cv2.GaussianBlur(img, (5, 5), cv2.BORDER_DEFAULT)
+            else:
+                blured_background = frame
             for item in frame_objects:
                 blured_background[item[2]:(item[2] + item[4]), item[1]:(item[1] + item[3])] = item[0]
             cv2.imshow("Image", blured_background)
