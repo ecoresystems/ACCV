@@ -146,3 +146,6 @@ cython_debug/
 
 # Weight file
 *.weights
+
+# Output Directory
+test_output/
