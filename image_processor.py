@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+from scipy.fft import dct, idct
 
 
 def dct_matrix_creator():
@@ -30,7 +31,15 @@ def channel_regulator(channel, height, width):
 
 
 def quantizer(block, quantization_matrix):
-    return np.round(block / quantization_matrix.reshape(8,8))
+    return np.round(block / quantization_matrix.reshape(8, 8))
+
+
+def dct2(a):
+    return dct(dct(a, axis=0, norm='ortho'), axis=1, norm='ortho')
+
+
+def idct2(a):
+    return idct(idct(a, axis=0, norm='ortho'), axis=1, norm='ortho')
 
 
 def low_pass_filtering(image, radius):

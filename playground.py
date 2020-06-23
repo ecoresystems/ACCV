@@ -69,7 +69,7 @@ if __name__ == "__main__":
                 print(idct(dctd))
                 print("Reversed Shfting Block")
                 print(idct(dctd)+127)
-            blocks[i, j] = quantizer(dct(blocks[i, j] - 127), quantization_matrix)
+            blocks[i, j] = quantizer(dct2(blocks[i, j] - 127), quantization_matrix)
             if i == 23 and j == 23:
                 print("DCT and Quantilized Matrix")
                 print(blocks[i, j])
@@ -78,8 +78,8 @@ if __name__ == "__main__":
                 print("Reverse Quantilized Matrix")
                 print(blocks[i, j])
                 print("IDCT Matrix")
-                print(idct(blocks[i,j]).astype(int))
-            blocks[i,j] = idct(blocks[i,j]).astype(int)+127
+                print(idct2(blocks[i,j]).astype(int))
+            blocks[i,j] = idct2(blocks[i,j]).astype(int)+127
             if i == 23 and j == 23:
                 print("IDCT and Reshifted Matrix")
                 print(blocks[i, j])
