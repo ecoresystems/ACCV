@@ -14,10 +14,23 @@ def dct_matrix_creator():
     return dct_matrix
 
 
-def dct_transformer(block,dct_matrix):
+def dct_transformer(block, dct_matrix):
     res = np.dot(dct_matrix, block)
-    res = np.dot(res, np.transpose(dct_matrix))
-    return res
+    return np.dot(res, dct_matrix.T)
+
+
+def channel_regulator(channel, height, width):
+    fill_height = height % 16
+    fill_width = width % 16
+    if fill_height != 0:
+        fill_height = 16 - fill_height
+    if fill_width != 0:
+        fill_width = 16 - fill_width
+    return np.pad(channel, ((0, fill_height), (0, fill_width)), 'constant', constant_values=(0, 0))
+
+
+def quantizer(block, quantization_matrix):
+    return np.round(block / quantization_matrix.reshape(8,8))
 
 
 def low_pass_filtering(image, radius):
