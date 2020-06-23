@@ -2,6 +2,24 @@ import numpy as np
 import cv2
 
 
+def dct_matrix_creator():
+    dct_matrix = np.zeros(shape=(8, 8))
+    for i in range(8):
+        if i == 0:
+            c = np.sqrt(1 / 8)
+        else:
+            c = np.sqrt(2 / 8)
+        for j in range(8):
+            dct_matrix[i, j] = c * np.cos(np.pi * i * (2 * j + 1) / (2 * 8))
+    return dct_matrix
+
+
+def dct_transformer(block,dct_matrix):
+    res = np.dot(dct_matrix, block)
+    res = np.dot(res, np.transpose(dct_matrix))
+    return res
+
+
 def low_pass_filtering(image, radius):
     # 对图像进行傅里叶变换，fft是一个三维数组，fft[:, :, 0]为实数部分，fft[:, :, 1]为虚数部分
     fft = cv2.dft(np.float32(image), flags=cv2.DFT_COMPLEX_OUTPUT)

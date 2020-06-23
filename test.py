@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 from image_processor import *
+import JpegEncoder
 
 if __name__ == "__main__":
     counter = 0
