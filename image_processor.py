@@ -20,6 +20,11 @@ def dct_transformer(block, dct_matrix):
     return np.dot(res, dct_matrix.T)
 
 
+def idct_transformer(block, dct_matrix):
+    res = np.dot(dct_matrix.T, block)
+    return np.dot(res, dct_matrix)
+
+
 def channel_regulator(channel, height, width):
     fill_height = height % 16
     fill_width = width % 16
@@ -31,7 +36,7 @@ def channel_regulator(channel, height, width):
 
 
 def quantizer(block, quantization_matrix):
-    return np.round(block / quantization_matrix.reshape(8, 8))
+    return np.round(block / quantization_matrix.reshape(8, 8)).astype(int)
 
 
 def dct2(a):

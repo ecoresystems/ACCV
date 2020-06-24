@@ -2,8 +2,10 @@ from image_processor import *
 import numpy as np
 from scipy.fft import dct, idct
 import os
+from numpy import r_
 from matplotlib import pyplot as plt
 import cv2
+import time
 
 
 def do_sth():
@@ -30,8 +32,14 @@ def do_sth():
 
 
 if __name__ == "__main__":
+    reference_quanti_matrix = quantization_matrix = np.array(
+        [16, 11, 10, 16, 24, 40, 51, 61, 12, 12, 14, 19, 26, 58, 60, 55, 14, 13, 16, 24, 40, 57, 69, 59, 14, 17, 22, 29,
+         51,
+         87, 80, 62, 18, 22, 37, 56, 68, 109, 103, 77, 24, 35, 55, 64, 81, 104, 113, 92, 49, 64, 78, 87, 103, 121, 120,
+         101,
+         72, 92, 95, 98, 112, 100, 103, 99])
+    dct_matrix = dct_matrix_creator()
     img = cv2.imread("test.png")
-    print(img.shape)
     height = img.shape[0]
     width = img.shape[1]
     b, g, r = cv2.split(img)
@@ -41,61 +49,44 @@ if __name__ == "__main__":
     rectified_y_channel = channel_regulator(y_channel, height, width)
     rectified_u_channel = channel_regulator(u_channel, height, width)
     rectified_v_channel = channel_regulator(v_channel, height, width)
-    print("Original Y channel:")
-    print(rectified_y_channel)
+    print(rectified_y_channel.shape)
+    print(rectified_u_channel.shape)
+    print(rectified_v_channel.shape)
+    cv2.imwrite("Original_REC_Y.png",rectified_y_channel)
     rectified_b_copy = rectified_b
     rectified_g = channel_regulator(g, height, width)
     rectified_r = channel_regulator(r, height, width)
     cv2.imwrite("org.png", rectified_y_channel)
     height = rectified_b.shape[0]
     width = rectified_b.shape[1]
-    shape = (height // 8, width // 8, 8, 8)
-    strides = rectified_y_channel.itemsize * np.array([width * 8, 8, width, 1])
-    blocks = np.lib.stride_tricks.as_strided(rectified_y_channel, shape=shape, strides=strides)
-    quantization_matrix = np.load(os.path.join("quantization_tables", "Adobe_Photoshop__Save_As_11_lc.npy"))
-    print("Quantization Matrix")
-    print(quantization_matrix.reshape(8,8))
-    for i in range(height // 8):
-        for j in range(width // 8):
-            if i == 23 and j == 23:
-                print("Original Block")
-                print(blocks[i, j])
-                print("Shifted Block")
-                print(blocks[i, j]-127)
-                print("DCT Block")
-                dctd = dct(blocks[i, j]-127)
-                print(dctd)
-                print("IDCT Block")
-                print(idct(dctd))
-                print("Reversed Shfting Block")
-                print(idct(dctd)+127)
-            blocks[i, j] = quantizer(dct2(blocks[i, j] - 127), quantization_matrix)
-            if i == 23 and j == 23:
-                print("DCT and Quantilized Matrix")
-                print(blocks[i, j])
-            blocks[i, j] = blocks[i, j] * quantization_matrix.reshape(8, 8)
-            if i == 23 and j == 23:
-                print("Reverse Quantilized Matrix")
-                print(blocks[i, j])
-                print("IDCT Matrix")
-                print(idct2(blocks[i,j]).astype(int))
-            blocks[i,j] = idct2(blocks[i,j]).astype(int)+127
-            if i == 23 and j == 23:
-                print("IDCT and Reshifted Matrix")
-                print(blocks[i, j])
-            pass
-    res = np.hstack(np.hstack(blocks))
-    print("Recovered Block")
-    print(blocks[23][23])
-    # res = idct(res)
-    # res = res+127
-    img = cv2.merge([res, rectified_u_channel, rectified_v_channel])
-    img_rgb = cv2.cvtColor(img, cv2.COLOR_YUV2RGB)
-    print("Recovered Y channel")
-    print(res)
-    cv2.imwrite("recovered.png", res)
-    plt.subplot(1, 2, 1), plt.imshow(res, cmap='gray')
+    imsize = rectified_y_channel.shape
+    dct = np.zeros(imsize)
+    idct = np.zeros(imsize)
+    rectified_y_channel_shifted = rectified_y_channel.astype(int) -128
+    print("Shifted y channel")
+    print(rectified_y_channel_shifted)
+    quantization_matrix = np.load(os.path.join("quantization_tables","Adobe_Photoshop__Save_As_00_lc.npy")).reshape(8, 8)
+    start_time = time.time()
+    for i in r_[:imsize[0]:8]:
+        for j in r_[:imsize[1]:8]:
+            dct_block = dct2(rectified_y_channel_shifted[i:(i + 8), j:(j + 8)])
+            quantified_block = np.round(dct_block / quantization_matrix)
+            restored_dct_block = quantified_block * quantization_matrix
+            restored_block = idct2(restored_dct_block)
+            idct[i:(i + 8), j:(j + 8)] = restored_block.astype(dtype="uint8")
+    reshifted_y_channel = (idct + 127).astype(dtype="uint8")
+    print("Time consumption per channel: ",end="")
+    print(time.time()-start_time)
+    print("Final y channel:")
+    print(reshifted_y_channel)
+    concatenate_res = np.hstack((reshifted_y_channel, rectified_y_channel))
+    plt.imshow(concatenate_res, cmap="gray")
+    cv2.imwrite("PROCESSED_REC_Y.png",reshifted_y_channel)
+    restored_img = cv2.merge([reshifted_y_channel, rectified_u_channel, rectified_v_channel])
+    img_rgb = cv2.cvtColor(restored_img, cv2.COLOR_YUV2RGB)
+    # cv2.imwrite("recovered.png", reshifted_y_channel)
+    plt.subplot(1, 2, 1), plt.imshow(img_rgb)
     plt.title('input image'), plt.xticks([]), plt.yticks([])
-    plt.subplot(1, 2, 2), plt.imshow(img_rgb)
+    plt.subplot(1, 2, 2), plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
     plt.title('magnitude spectrum'), plt.xticks([]), plt.yticks([])
     plt.show()
