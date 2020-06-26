@@ -14,6 +14,12 @@ def dct_matrix_creator():
             dct_matrix[i, j] = c * np.cos(np.pi * i * (2 * j + 1) / (2 * 8))
     return dct_matrix
 
+def block_processor(block,dct_matrix,quantization_martix):
+    dct_block = dct_transformer(rectified_y_channel_shifted[i:(i + 8), j:(j + 8)], dct_matrix)
+    quantified_block = np.round(dct_block / quantization_matrix)
+    restored_dct_block = quantified_block * quantization_matrix
+    restored_block = idct2(restored_dct_block)
+    pass
 
 def dct_transformer(block, dct_matrix):
     res = np.dot(dct_matrix, block)
