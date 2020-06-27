@@ -1,6 +1,22 @@
 import numpy as np
+from numpy import r_
 import cv2
 from scipy.fft import dct, idct
+
+
+def background_processor(img, dct_matrix, quantization_matrix_lc, quantization_matrix_cc):
+    height = img.shape[0]
+    width = img.shape[1]
+    img_yuv = cv2.cvtColor(img, cv2.COLOR_BGR2YUV)
+    y_channel, u_channel, v_channel = cv2.split(img_yuv)
+    rectified_y_channel = channel_regulator(y_channel, height, width)
+    rectified_u_channel = channel_regulator(u_channel, height, width)
+    rectified_v_channel = channel_regulator(v_channel, height, width)
+    reshifted_y_channel = channel_processor(rectified_y_channel, quantization_matrix_lc, dct_matrix)
+    reshifted_u_channel = channel_processor(rectified_u_channel, quantization_matrix_cc, dct_matrix)
+    reshifted_v_channel = channel_processor(rectified_v_channel, quantization_matrix_cc, dct_matrix)
+    restored_img = cv2.merge([reshifted_y_channel, reshifted_u_channel, reshifted_v_channel])
+    return restored_img[0:height, 0:width]
 
 
 def dct_matrix_creator():
@@ -14,12 +30,26 @@ def dct_matrix_creator():
             dct_matrix[i, j] = c * np.cos(np.pi * i * (2 * j + 1) / (2 * 8))
     return dct_matrix
 
-def block_processor(block,dct_matrix,quantization_martix):
-    dct_block = dct_transformer(rectified_y_channel_shifted[i:(i + 8), j:(j + 8)], dct_matrix)
-    quantified_block = np.round(dct_block / quantization_matrix)
+
+def channel_processor(channel, quantization_matrix, dct_matrix):
+    imsize = channel.shape
+    idct = np.zeros(imsize)
+    shifted_channel = channel.astype(dtype="int16") - 128
+    for i in r_[:imsize[0]:8]:
+        for j in r_[:imsize[1]:8]:
+            idct[i:(i + 8), j:(j + 8)] = block_processor(shifted_channel[i:(i + 8), j:(j + 8)], dct_matrix,
+                                                         quantization_matrix).astype(dtype="int16")
+    reshifted_channel = np.clip((idct + 127), 0, 255).astype(dtype="uint8")
+    return reshifted_channel
+
+
+def block_processor(block, dct_matrix, quantization_matrix):
+    dct_block = dct_transformer(block, dct_matrix)
+    quantified_block = np.round(dct_block / quantization_matrix).astype(dtype="int16")
     restored_dct_block = quantified_block * quantization_matrix
-    restored_block = idct2(restored_dct_block)
-    pass
+    restored_block = idct_transformer(restored_dct_block, dct_matrix)
+    return restored_block
+
 
 def dct_transformer(block, dct_matrix):
     res = np.dot(dct_matrix, block)
@@ -51,31 +81,6 @@ def dct2(a):
 
 def idct2(a):
     return idct(idct(a, axis=0, norm='ortho'), axis=1, norm='ortho')
-
-
-def low_pass_filtering(image, radius):
-    # 对图像进行傅里叶变换，fft是一个三维数组，fft[:, :, 0]为实数部分，fft[:, :, 1]为虚数部分
-    fft = cv2.dft(np.float32(image), flags=cv2.DFT_COMPLEX_OUTPUT)
-    # 对fft进行中心化，生成的dshift仍然是一个三维数组
-    dshift = np.fft.fftshift(fft)
-
-    # 得到中心像素
-    rows, cols = image.shape[:2]
-    mid_row, mid_col = int(rows / 2), int(cols / 2)
-
-    # 构建掩模，256位，两个通道
-    mask = np.zeros((rows, cols, 2), np.float32)
-    mask[mid_row - radius:mid_row + radius, mid_col - radius:mid_col + radius] = 1
-
-    # 给傅里叶变换结果乘掩模
-    fft_filtering = dshift * mask
-    # 傅里叶逆变换
-    ishift = np.fft.ifftshift(fft_filtering)
-    image_filtering = cv2.idft(ishift)
-    image_filtering = cv2.magnitude(image_filtering[:, :, 0], image_filtering[:, :, 1])
-    # 对逆变换结果进行归一化（一般对图像处理的最后一步都要进行归一化，特殊情况除外）
-    cv2.normalize(image_filtering, image_filtering, 0, 1, cv2.NORM_MINMAX)
-    return image_filtering
 
 
 # Load Yolo

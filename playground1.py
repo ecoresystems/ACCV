@@ -3,13 +3,14 @@ import numpy as np
 from scipy.fft import dct, idct
 import time
 import os
+import torch
 from matplotlib import pyplot as plt
 import cv2
 
 
 def dct2(a):
     return dct(dct(a, axis=0, norm='ortho'), axis=1, norm='ortho')
-
+print(torch.cuda.current_device())
 test_matrix = np.full((1,64),222)
 print(test_matrix)
 block = np.array(

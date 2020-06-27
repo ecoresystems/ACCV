@@ -1,7 +1,5 @@
-import cv2
-import numpy as np
 from image_processor import *
-import JpegEncoder
+import os
 
 if __name__ == "__main__":
     counter = 0
@@ -13,7 +11,6 @@ if __name__ == "__main__":
     layer_names = net.getLayerNames()
     output_layers = [layer_names[i[0] - 1] for i in net.getUnconnectedOutLayers()]
     colors = np.random.uniform(0, 255, size=(len(classes), 3))
-
     # String Capturing process
     cap = cv2.VideoCapture('test_x264.mp4')
     if not cap.isOpened():
@@ -22,19 +19,16 @@ if __name__ == "__main__":
     while cap.isOpened():
         ret, frame = cap.read()
         counter += 1
-        counterx = 0
+        dct_matrix = dct_matrix_creator()
+        quantization_matrix_lc = np.load(
+            os.path.join("quantization_tables", "Adobe_Photoshop__Save_As_00_lc.npy")).reshape(
+            8, 8)
+        quantization_matrix_cc = np.load(
+            os.path.join("quantization_tables", "Adobe_Photoshop__Save_As_00_lc.npy")).reshape(
+            8, 8)
         if ret:
             # img = cv2.resize(frame, None, fx=0.8, fy=0.8)
-            img = frame
-            b, g, r = cv2.split(img)
-            img_yuv = cv2.cvtColor(img, cv2.COLOR_BGR2YUV)
-            y_channel, u_channel, v_channel = cv2.split(img_yuv)
-            class_ids, confidences, boxes, indexes = object_detector(net, output_layers, img)
-            # y_channel_lowpassed = low_pass_filtering(y_channel, 200)
-            # b_lowpassed = low_pass_filtering(b, 100)
-            # g_lowpassed = low_pass_filtering(g, 100)
-            # r_lowpassed = low_pass_filtering(r, 100)
-            # restored_image = cv2.merge([b_lowpassed, g_lowpassed, r_lowpassed])
+            class_ids, confidences, boxes, indexes = object_detector(net, output_layers, frame)
             font = cv2.FONT_HERSHEY_PLAIN
             frame_objects = []
             for i in range(len(boxes)):
@@ -44,19 +38,16 @@ if __name__ == "__main__":
                     color = colors[i]
                     # cv2.rectangle(img, (x, y), (x + w, y + h), color, 2)
                     # cv2.putText(img, label, (x, y + 30), font, 1, color, 1)
-                    identified_object = img[y:(y + h), x:(x + w)]
+                    identified_object = frame[y:(y + h), x:(x + w)]
                     frame_objects.append((identified_object, x, y, w, h, label))
-            if len(frame_objects) > 0:
-                blured_background = cv2.GaussianBlur(img, (5, 5), cv2.BORDER_DEFAULT)
-            else:
-                blured_background = frame
+            processed_background = background_processor(frame, dct_matrix, quantization_matrix_lc,
+                                                        quantization_matrix_cc)
+            processed_background_bgr = cv2.cvtColor(processed_background, cv2.COLOR_YUV2BGR)
             for item in frame_objects:
-                blured_background[item[2]:(item[2] + item[4]), item[1]:(item[1] + item[3])] = item[0]
-            cv2.imshow("Image", blured_background)
-            cv2.imwrite("test_output/blured%d.png" % counter, blured_background)
-            cv2.imwrite("test_output/original%d.png" % counter, frame)
-            # break
-            # print(y_channel)
+                processed_background_bgr[item[2]:(item[2] + item[4]), item[1]:(item[1] + item[3])] = item[0]
+            cv2.imshow("Image", processed_background_bgr)
+            cv2.imwrite(os.path.join("test_output", "processed", "processed%06d.png" % counter), processed_background_bgr)
+            cv2.imwrite(os.path.join("test_output", "original", "original%06d.png" % counter), frame)
 
             if cv2.waitKey(25) & 0xFF == ord('q'):
                 break
