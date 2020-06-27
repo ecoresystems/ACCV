@@ -15,17 +15,16 @@ if __name__ == "__main__":
     cap = cv2.VideoCapture('test_x264.mp4')
     if not cap.isOpened():
         print("Error opening video stream or file")
-
+    dct_matrix = dct_matrix_creator()
+    quantization_matrix_lc = np.load(
+        os.path.join("quantization_tables", "Adobe_Photoshop__Save_As_00_lc.npy")).reshape(
+        8, 8)
+    quantization_matrix_cc = np.load(
+        os.path.join("quantization_tables", "Adobe_Photoshop__Save_As_00_lc.npy")).reshape(
+        8, 8)
     while cap.isOpened():
         ret, frame = cap.read()
         counter += 1
-        dct_matrix = dct_matrix_creator()
-        quantization_matrix_lc = np.load(
-            os.path.join("quantization_tables", "Adobe_Photoshop__Save_As_00_lc.npy")).reshape(
-            8, 8)
-        quantization_matrix_cc = np.load(
-            os.path.join("quantization_tables", "Adobe_Photoshop__Save_As_00_lc.npy")).reshape(
-            8, 8)
         if ret:
             # img = cv2.resize(frame, None, fx=0.8, fy=0.8)
             class_ids, confidences, boxes, indexes = object_detector(net, output_layers, frame)
@@ -45,10 +44,11 @@ if __name__ == "__main__":
             processed_background_bgr = cv2.cvtColor(processed_background, cv2.COLOR_YUV2BGR)
             for item in frame_objects:
                 processed_background_bgr[item[2]:(item[2] + item[4]), item[1]:(item[1] + item[3])] = item[0]
-            cv2.imshow("Image", processed_background_bgr)
-            cv2.imwrite(os.path.join("test_output", "processed", "processed%06d.png" % counter), processed_background_bgr)
+            # cv2.imshow("Image", processed_background_bgr)
+            cv2.imwrite(os.path.join("test_output", "processed", "processed%06d.png" % counter),
+                        processed_background_bgr)
             cv2.imwrite(os.path.join("test_output", "original", "original%06d.png" % counter), frame)
-
+            print("Processed %d Frame" % counter)
             if cv2.waitKey(25) & 0xFF == ord('q'):
                 break
 
