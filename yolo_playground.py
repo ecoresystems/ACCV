@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 import tensorflow as tf
 from yolov4.tf import YOLOv4
+from yolov4.core import utils
 
 physical_devices = tf.config.experimental.list_physical_devices('GPU')
 tf.config.experimental.set_memory_growth(physical_devices[0], True)
@@ -25,7 +26,8 @@ while True:
         raise ValueError("No image! Try with another video format")
 
     prev_time = time.time()
-    image = yolo.predict(frame)
+    image, bboxes = yolo.predict(frame)
+    print(bboxes)
     curr_time = time.time()
     exec_time = curr_time - prev_time
     result = np.asarray(image)

@@ -3,7 +3,6 @@ import numpy as np
 from scipy.fft import dct, idct
 import time
 import os
-import torch
 from matplotlib import pyplot as plt
 import cv2
 

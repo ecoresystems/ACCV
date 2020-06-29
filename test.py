@@ -1,5 +1,7 @@
-from image_processor import *
 import os
+from SSIM_PIL import compare_ssim
+from PIL import Image
+from image_processor import *
 
 if __name__ == "__main__":
     counter = 0
@@ -17,10 +19,10 @@ if __name__ == "__main__":
         print("Error opening video stream or file")
     dct_matrix = dct_matrix_creator()
     quantization_matrix_lc = np.load(
-        os.path.join("quantization_tables", "Adobe_Photoshop__Save_As_00_lc.npy")).reshape(
+        os.path.join("quantization_tables", "Adobe_Photoshop__Save_As_03_lc.npy")).reshape(
         8, 8)
     quantization_matrix_cc = np.load(
-        os.path.join("quantization_tables", "Adobe_Photoshop__Save_As_00_lc.npy")).reshape(
+        os.path.join("quantization_tables", "Adobe_Photoshop__Save_As_03_cc.npy")).reshape(
         8, 8)
     while cap.isOpened():
         ret, frame = cap.read()
@@ -39,19 +41,26 @@ if __name__ == "__main__":
                     # cv2.putText(img, label, (x, y + 30), font, 1, color, 1)
                     identified_object = frame[y:(y + h), x:(x + w)]
                     frame_objects.append((identified_object, x, y, w, h, label))
-            processed_background = background_processor(frame, dct_matrix, quantization_matrix_lc,
-                                                        quantization_matrix_cc)
-            processed_background_bgr = cv2.cvtColor(processed_background, cv2.COLOR_YUV2BGR)
+            if frame_objects:
+                processed_background = background_processor(frame, dct_matrix, quantization_matrix_lc,
+                                                            quantization_matrix_cc)
+                processed_background_bgr = cv2.cvtColor(processed_background, cv2.COLOR_YUV2BGR)
+            else:
+                processed_background_bgr = frame
             for item in frame_objects:
                 processed_background_bgr[item[2]:(item[2] + item[4]), item[1]:(item[1] + item[3])] = item[0]
-            # cv2.imshow("Image", processed_background_bgr)
+            display_img = processed_background_bgr
             cv2.imwrite(os.path.join("test_output", "processed", "processed%06d.png" % counter),
                         processed_background_bgr)
             cv2.imwrite(os.path.join("test_output", "original", "original%06d.png" % counter), frame)
+            image1 = Image.open(os.path.join("test_output", "original", "original%06d.png" % counter))
+            image2 = Image.open(os.path.join("test_output", "processed", "processed%06d.png" % counter))
             print("Processed %d Frame" % counter)
+            ssim = compare_ssim(image1,image2)
+            print("SSIM: "+str(ssim))
+            cv2.putText(display_img,str(ssim),(0, 0 + 30), font, 1, colors[2], 1)
+            cv2.imshow("Image", display_img)
             if cv2.waitKey(25) & 0xFF == ord('q'):
                 break
-
         else:
-            pass
-            # break
+            break
