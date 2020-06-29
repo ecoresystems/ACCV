@@ -2,6 +2,7 @@ import os
 
 from matplotlib import pyplot as plt
 import time
+import cv2
 
 from image_processor import *
 
