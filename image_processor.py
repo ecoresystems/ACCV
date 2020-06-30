@@ -4,6 +4,8 @@ from numpy import r_
 from scipy.fft import dct, idct
 
 
+
+
 def background_processor(img, dct_matrix, quantization_matrix_lc, quantization_matrix_cc):
     height = img.shape[0]
     width = img.shape[1]
