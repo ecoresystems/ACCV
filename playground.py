@@ -1,8 +1,6 @@
 import os
 
 from matplotlib import pyplot as plt
-import time
-import cv2
 
 from image_processor import *
 
@@ -22,7 +20,7 @@ if __name__ == "__main__":
         8, 8)
     quantization_matrix_cc = np.load(os.path.join("quantization_tables", "Adobe_Photoshop__Save_As_00_lc.npy")).reshape(
         8, 8)
-    processed_img = background_processor(img, dct_matrix,quantization_matrix_lc,quantization_matrix_lc)
+    processed_img = background_processor(img, dct_matrix, quantization_matrix_lc, quantization_matrix_lc)
     print(processed_img.max())
     print(processed_img.min())
     img_rgb = cv2.cvtColor(processed_img, cv2.COLOR_YUV2RGB)

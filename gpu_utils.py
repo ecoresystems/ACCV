@@ -1,4 +1,4 @@
-import torch
+import tensorflow as tf
 from image_processor import *
 dct_matrix = dct_matrix_creator()
 img = cv2.imread("test.png")
