@@ -47,6 +47,7 @@ if __name__ == "__main__":
         counter += 1
         if ret:
             # img = cv2.resize(frame, None, fx=0.8, fy=0.8)
+            start_time = time.time()
             image_data = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             frame_size = frame.shape[:2]
             image_data = utils.image_preprocess(np.copy(image_data), [input_size, input_size])
@@ -77,13 +78,15 @@ if __name__ == "__main__":
             cv2.imwrite(os.path.join("test_output", "processed", "processed%06d.png" % counter),
                         processed_background_bgr)
             cv2.imwrite(os.path.join("test_output", "original", "original%06d.png" % counter), frame)
-            # image1 = Image.open(os.path.join("test_output", "original", "original%06d.png" % counter))
-            # image2 = Image.open(os.path.join("test_output", "processed", "processed%06d.png" % counter))
-            # print("Processed %d Frame" % counter)
-            # ssim = compare_ssim(image1, image2)
-            # print("SSIM: " + str(ssim))
-            # cv2.putText(display_img, str(ssim), (0, 0 + 30), font, 1, colors[2], 1)
+            image1 = Image.open(os.path.join("test_output", "original", "original%06d.png" % counter))
+            image2 = Image.open(os.path.join("test_output", "processed", "processed%06d.png" % counter))
+            print("Processed %d Frame" % counter)
+            ssim = compare_ssim(image1, image2)
+            print("SSIM: " + str(ssim))
+            cv2.putText(display_img, str(ssim), (0, 0 + 30), font, 1, colors[2], 1)
             cv2.imshow("Image", display_img)
+            print("Process time:",end='')
+            print(time.time()-start_time)
             if cv2.waitKey(25) & 0xFF == ord('q'):
                 break
         else:
