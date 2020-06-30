@@ -83,7 +83,7 @@ if __name__ == "__main__":
             # ssim = compare_ssim(image1, image2)
             # print("SSIM: " + str(ssim))
             # cv2.putText(display_img, str(ssim), (0, 0 + 30), font, 1, colors[2], 1)
-            # cv2.imshow("Image", display_img)
+            cv2.imshow("Image", display_img)
             if cv2.waitKey(25) & 0xFF == ord('q'):
                 break
         else:

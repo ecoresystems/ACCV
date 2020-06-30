@@ -18,7 +18,7 @@ def background_processor_gpu(img, quantization_matrix_lc, quantization_matrix_cc
     width = img.shape[1]
     img_yuv = cv2.cvtColor(img, cv2.COLOR_BGR2YUV)
     rectified_image_yuv = image_regulator(img_yuv, height, width)
-    tensor_image = image_processor_gpu(rectified_image_yuv,quantization_matrix_lc, quantization_matrix_cc)
+    tensor_image = image_processor_gpu(rectified_image_yuv, quantization_matrix_lc, quantization_matrix_cc)
     return tensor_image.numpy().astype("uint8")[0:height, 0:width]
 
 
@@ -38,15 +38,9 @@ def image_processor_gpu(image_yuv, quantization_matrix_lc, quantization_matrix_c
     restored_dct_y_channel = tf.multiply(quantified_dct_y_channel, quantization_matrix_lc_tile)
     restored_dct_u_channel = tf.multiply(quantified_dct_u_channel, quantization_matrix_cc_tile)
     restored_dct_v_channel = tf.multiply(quantified_dct_v_channel, quantization_matrix_cc_tile)
-    print("********************************************************************")
-    print(dct_image.shape)
-    print(quantified_dct_y_channel.shape)
-    # idct[:, :, 0] = restored_dct_y_channel
-    # idct[:, :, 1] = restored_dct_u_channel
-    # idct[:, :, 2] = restored_dct_v_channel
-    idct = tf.stack([restored_dct_y_channel,restored_dct_u_channel,restored_dct_v_channel],-1)
-    print(idct.shape)
-    reshifted_image = tf.clip_by_value(idct+128, clip_value_min=0, clip_value_max=255)
+    idct = image_idct_transformer_gpu(
+        tf.stack([restored_dct_y_channel, restored_dct_u_channel, restored_dct_v_channel], -1))
+    reshifted_image = tf.clip_by_value(idct + 128, clip_value_min=0, clip_value_max=255)
     return reshifted_image
 
 
