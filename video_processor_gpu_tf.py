@@ -1,13 +1,12 @@
 import os
 import time
 
-from PIL import Image
-from SSIM_PIL import compare_ssim
-
 import core.utils as utils
 from core.config import cfg
 from core.yolov4 import YOLOv4, decode
 from image_processor_gpu import *
+from PIL import Image
+from SSIM_PIL import compare_ssim
 
 if __name__ == "__main__":
     physical_devices = tf.config.experimental.list_physical_devices('GPU')
@@ -68,25 +67,26 @@ if __name__ == "__main__":
                 frame_objects.append((identified_object, coor[0], coor[1], coor[2], coor[3], classes[class_index]))
             # image = utils.draw_bbox(frame, bboxes)
             if frame_objects:
-                processed_background = background_processor_gpu(frame,quantization_matrix_lc,quantization_matrix_cc)
+                processed_background = background_processor_gpu(frame, quantization_matrix_lc, quantization_matrix_cc)
                 processed_background_bgr = cv2.cvtColor(processed_background, cv2.COLOR_YUV2BGR)
             else:
                 processed_background_bgr = frame
             for item in frame_objects:
                 processed_background_bgr[item[2]:item[4], item[1]:item[3]] = item[0]
             display_img = processed_background_bgr
-            cv2.imwrite(os.path.join("test_output", "processed", "processed%06d.png" % counter),
-                        processed_background_bgr)
-            cv2.imwrite(os.path.join("test_output", "original", "original%06d.png" % counter), frame)
-            image1 = Image.open(os.path.join("test_output", "original", "original%06d.png" % counter))
-            image2 = Image.open(os.path.join("test_output", "processed", "processed%06d.png" % counter))
+            # cv2.imwrite(os.path.join("test_output", "processed", "processed%06d.png" % counter),
+            #             processed_background_bgr)
+            # cv2.imwrite(os.path.join("test_output", "original", "original%06d.png" % counter), frame)
+            # image1 = Image.open(os.path.join("test_output", "original", "original%06d.png" % counter))
+            # image2 = Image.open(os.path.join("test_output", "processed", "processed%06d.png" % counter))
             print("Processed %d Frame" % counter)
-            ssim = compare_ssim(image1, image2)
-            print("SSIM: " + str(ssim))
-            cv2.putText(display_img, str(ssim), (0, 0 + 30), font, 1, colors[2], 1)
-            cv2.imshow("Image", display_img)
-            print("Process time:",end='')
-            print(time.time()-start_time)
+            # ssim = compare_ssim(image1, image2)
+            # print("SSIM: " + str(ssim))
+            # cv2.putText(display_img, str(ssim), (0, 0 + 30), font, 1, colors[2], 1)
+            # cv2.imshow("Processed", display_img)
+            # cv2.imshow("Original", frame)
+            # print("Process time:",end='')
+            print(time.time() - start_time)
             if cv2.waitKey(25) & 0xFF == ord('q'):
                 break
         else:
